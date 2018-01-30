@@ -1,0 +1,33 @@
+$enable-print-styles: false;
+
+@import '../node_modules/bootstrap/scss/bootstrap';
+
+@mixin mq($screen) {
+  @if $screen == lg {
+    @media (max-width: 1600px) { @content; }
+  }
+  @else if $screen == md {
+    @media (max-width: 1250px) { @content; }
+  }
+  @else if $screen == sm {
+    @media (max-width: 650px)  { @content; }
+  }
+  @else if $screen == print {
+    @media print { @content; }
+  }
+}
+
+body {
+  padding: 2rem;
+}
+
+@page {
+  margin: 0cm;
+}
+
+@media print {
+  body {
+    padding: 0;
+    background: none;
+  }
+}

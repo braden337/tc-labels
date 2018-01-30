@@ -1,0 +1,30 @@
+{
+  "name": "timecards",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently \"npm run watch\" \"npm run serve\"",
+    "watch": "parcel ./src/index.html",
+    "serve": "browser-sync start -f ./dist --proxy localhost:1234 --no-open"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-preset-env": "^1.6.1",
+    "bootstrap": "^4.0.0",
+    "browser-sync": "^2.23.6",
+    "concurrently": "^3.5.1",
+    "lodash": "^4.17.4",
+    "moment": "^2.20.1",
+    "node-sass": "^4.7.2",
+    "parcel-bundler": "^1.5.1",
+    "parcel-plugin-vue": "^1.5.0",
+    "vue": "^2.5.13",
+    "vue-input-tag": "0.0.16",
+    "vue-template-compiler": "^2.5.13",
+    "vuejs-datepicker": "^0.9.24"
+  }
+}
