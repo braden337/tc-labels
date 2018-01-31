@@ -19,7 +19,7 @@
           <p class="form-text text-right">
             <a
               href="#"
-              @click.prevent="people = []">clear</a> /
+              @click.prevent="clearPeople">clear</a> /
             <a
               :href="peopleDataUri"
               :download="saveFileName">save</a> /
@@ -277,6 +277,10 @@ module.exports = {
     }
   },
   methods: {
+    clearPeople() {
+      this.people = []
+      this.savePeople([])
+    },
     restore(e) {
       let reader = new FileReader()
       reader.readAsText(e.target.files[0])
