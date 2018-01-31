@@ -1,1 +1,0 @@
-{"dependencies":[],"generated":{"js":"document.body.style.backgroundColor = \"var(--red)\"","map":{"mappings":[{"source":"client.js","original":{"line":1,"column":0},"generated":{"line":1,"column":0}}],"sources":{"client.js":"document.body.style.backgroundColor = \"var(--red)\""},"lineCount":1}},"hash":"b54cb2a75caddd390ef6298586b669ed","cacheData":{"env":{}}}

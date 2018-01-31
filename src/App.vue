@@ -2,48 +2,62 @@
   <div class="wrapper">
 
     <main>
-      <div class="items" v-for="stickers in thirties">
-        <div class="item" v-for="sticker in stickers">
-          {{sticker[0]}}<br>{{sticker[1]}}<br>&nbsp;
+      <div class="items" v-for="thirty in thirties">
+        <div class="item" v-for="label in thirty">
+          {{label[0]}}<br>{{label[1] | weekRange}}<br>&nbsp;
         </div>
       </div>
     </main>
 
     <aside>
       <h1>Timecard Labels</h1>
-
-      <div class="form-group">
-        <label for="newPerson">People:&nbsp;</label>
-        <input-tag :tags="people" :on-change="savePeople"></input-tag>
-      </div>
-
-      <div class="form-group">
-        <label>Start:</label>
-        <date-picker
-          v-model="start"
-          @input="validateSelection"
-          :disabled="startDisabled"
-          format="D - MMM d, yyyy"
-          :bootstrap-styling="true">
-        </date-picker>
-      </div>
-
-      <div class="form-group" v-if="start">
-        <label>End:</label>
-        <date-picker
-          v-model="end"
-          :disabled="endDisabled"
-          format="D - MMM d, yyyy"
-          :bootstrap-styling="true"
-          :disabled-picker="!start"
-          :open-date="nextWeek">
-        </date-picker>
-      </div>
-
-      <div class="form-group">
-        <input type="checkbox" id="sortByDate" v-model="sortByDate">
-        <label for="sortByDate">Sort by date</label>
-      </div>
+      <form>
+        <div class="form-group">
+          <label for="newPerson">People:&nbsp;</label>
+          <input-tag :tags="people" :on-change="savePeople"></input-tag>
+          <!--<button class="btn btn-primary" @click="sortPeople">Sort</button>-->
+          <p class="form-text text-right">
+            <a
+              href="#"
+              @click.prevent="people = []">clear</a> /
+            <a
+              :href="peopleDataUri"
+              :download="saveFileName">save</a> /
+            <a
+              href="#restore"
+              @click.prevent="upload = !upload">{{upload ? 'close' : 'restore'}}</a>
+          </p>
+          <input type="file" @change="restore" class="form-control" v-if="upload" id="restore">
+        </div>
+  
+        <div class="form-group">
+          <label>Start:</label>
+          <date-picker
+            v-model="start"
+            :disabled="startDisabled"
+            :format="dateFormat"
+            :bootstrap-styling="true"
+            :open-date="startOpenDate">
+          </date-picker>
+        </div>
+  
+        <div class="form-group" v-if="start">
+          <label>End:</label>
+          <date-picker
+            v-model="end"
+            :disabled="endDisabled"
+            :format="dateFormat"
+            :bootstrap-styling="true"
+            :disabled-picker="!start"
+            :open-date="nextWeek">
+          </date-picker>
+        </div>
+  
+        <div class="form-group">
+          <input type="checkbox" id="sortByDate" v-model="sortByDate">
+          <label for="sortByDate">Sort by date</label>
+        </div>
+      </form>
     </aside>
 
     <footer>
@@ -67,15 +81,15 @@
   grid-gap: 2rem;
   grid-template-areas:
   "aside main main"
-  "aside main main"
-  "footer footer footer";
+  "aside main main";
+  /*"footer footer footer";*/
   grid-template-columns: repeat(3, 1fr);
 
   @include mq(md) {
     grid-template-areas:
       "aside aside aside"
-      "main main main"
-      "footer footer footer";
+      "main main main";
+      /*"footer footer footer";*/
   }
 
   main {
@@ -122,13 +136,13 @@
 
   footer {
     grid-area: footer;
-    display: flex;
+    display: none;
 
     span {
       $greenish: lightseagreen;
       padding: 1rem;
-      background-color: $greenish;
-      border: 1px solid darken($greenish, 10%);
+      background-color: $green;
+      border: 1px solid darken($green, 10%);
       border-radius: 3px;
       color: darken($greenish, 30%);
 
@@ -158,79 +172,73 @@ import DatePicker from 'vuejs-datepicker'
 import { chunk } from 'lodash'
 import moment from 'moment'
 
-const ONE_WEEK = 604800000
 const ONE_DAY = 86400000
+const ONE_WEEK = ONE_DAY * 7
 
 const byNum = (a, b) => a-b
 
-function compareStickers(a, b) {
-  if (a[1] == b[1]) {
-    return 0
-  }
-  else if (a[1] < b[1]) {
-    return -1
-  }
-  else {
-    return 1
-  }
+function compareWeeks(a, b) {
+  return a[1].monday - b[1].monday
 }
 
-function mergeNamesWithDates(names, dates, sort) {
+function mergeNamesWithDates(names, weeks, sort) {
   let merged = []
   for (let name of names) {
-    for (let date of dates) {
-      merged.push([name, date])
+    for (let week of weeks) {
+      merged.push([name, week])
     }
   }
-  return sort ? merged.sort(compareStickers) : merged
+  return sort ? merged.sort(compareWeeks) : merged
 }
 
 function nextMonday() {
-  let today = moment()
-  let day = today.day()
+  let today = new Date()
+  let day = today.getDay()
   let monday = null
 
   if (day == 1) {
     monday = today
   }
   else if (day < 1) {
-    monday = today.add(1, 'day')
+    monday = new Date(today.valueOf() + ONE_DAY)
   }
   else {
-    monday = today.endOf('week').add(2, 'days')
+    monday = new Date(today.valueOf() + ONE_DAY * (8 - day))
   }
 
   return monday
 }
-// new Date(nextMonday())
-// new Date(nextMonday().add(6, 'days'))
+
+
 module.exports = {
   data: function() {
     return {
-      greeting: 'Hello world',
       people: JSON.parse(localStorage.getItem('people')) || [],
       sortByDate: false,
-      start: JSON.parse(localStorage.getItem('start')) || null,
-      end: JSON.parse(localStorage.getItem('end')) || null,
-      startDisable: null
+      start: null,
+      end: null,
+      startOpenDate: nextMonday(),
+      upload: false,
+      dateFormat: 'MMMM d, yyyy'
     }
   },
-  // created() {
-  //   this.startDisabled = {
-  //     days: [0,2,3,4,5,6],
-  //     // to: new Date(Date.now() - 86400000)
-  //   }
-  // },
   mounted() {
     document.querySelector('.new-tag').focus()
   },
   computed: {
+    saveFileName() {
+      return `people_${new Date().valueOf()}.json`
+    },
+    peopleDataUri() {
+      return `data:application/json;base64,${btoa(JSON.stringify(this.people, null, 2))}`
+    },
     nextWeek() {
       return new Date(this.start.valueOf() + ONE_WEEK)
     },
     startDisabled() {
       return {
         days: [0,2,3,4,5,6],
+        to: new Date(nextMonday().valueOf() - ONE_DAY),
         from: this.end
       }
     },
@@ -246,28 +254,57 @@ module.exports = {
     weeks() {
       let weeks = []
       if (this.start && this.end) {
-        let current = moment(this.start)
-        let end = moment(this.end)
-        while(current.isBefore(end)) {
-          let week = current.format('MMM DD - ')
-          current = current.add(6, 'days')
-          week += current.format('MMM DD, YYYY')
-          current = current.add(1, 'day')
+        let current = this.start.valueOf()
+        let end = this.end.valueOf()
+        while(current < end) {
+          let week = {}
+          week.monday = current.valueOf()
+          week.sunday = current.valueOf() + ONE_DAY * 6
           weeks.push(week)
+          current += ONE_WEEK
         }
+        // let current = moment(this.start)
+        // let end = moment(this.end)
+        // while(current.isBefore(end)) {
+        //   let week = current.format('MMM DD - ')
+        //   current = current.add(6, 'days')
+        //   week += current.format('MMM DD, YYYY')
+        //   current = current.add(1, 'day')
+        //   weeks.push(week)
+        // }
       }
-      return weeks;
+      return weeks
     }
   },
   methods: {
+    restore(e) {
+      let reader = new FileReader()
+      reader.readAsText(e.target.files[0])
+      reader.addEventListener('loadend', function() {
+        this.savePeople(JSON.parse(reader.result))
+        this.upload = false
+      }.bind(this))
+    },
     displayDate(date) {
       return date ? moment(date).format('ll') : ''
     },
     savePeople(people) {
-      localStorage.setItem('people', JSON.stringify(people))
+      let sortedPPL = people.slice().sort()
+      this.people = sortedPPL
+      localStorage.setItem('people', JSON.stringify(sortedPPL))
     },
     validateSelection(e) {
 
+    },
+    sortPeople() {
+      this.people = this.people.slice().sort()
+    }
+  },
+  filters: {
+    weekRange(week) {
+      let a = moment(week.monday)
+      let b = moment(week.sunday)
+      return a.format('MMM D')+' - '+b.format('MMM D, YYYY')
     }
   },
   components: {
