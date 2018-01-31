@@ -77,9 +77,13 @@
 </template>
 
 
-<style lang="scss" scoped>
+<style lang="scss">
 
 @import './style';
+
+.vue-input-tag-wrapper .new-tag {
+  font-size: 1rem !important;
+}
 
 .wrapper {
   display: grid;
