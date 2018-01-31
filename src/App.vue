@@ -19,7 +19,7 @@
           <p class="form-text text-right">
             <a
               href="#"
-              @click.prevent="clearPeople">clear</a> /
+              @click.prevent="clear">clear</a> /
             <a
               :href="peopleDataUri"
               :download="saveFileName">save</a> /
@@ -37,7 +37,8 @@
             :disabled="startDisabled"
             :format="dateFormat"
             :bootstrap-styling="true"
-            :open-date="startOpenDate">
+            :open-date="startOpenDate"
+            @input="saveDate('start', $event)">
           </date-picker>
         </div>
   
@@ -49,15 +50,19 @@
             :format="dateFormat"
             :bootstrap-styling="true"
             :disabled-picker="!start"
-            :open-date="nextWeek">
+            :open-date="nextWeek"
+            @input="saveDate('end', $event)">
           </date-picker>
         </div>
   
         <div class="form-group">
-          <input type="checkbox" id="sortByDate" v-model="sortByDate">
+          <input @change="saveSort" type="checkbox" id="sortByDate" v-model="sortByDate">
           <label for="sortByDate">Sort by date</label>
         </div>
       </form>
+      <div v-if="start && end && people.length" class="alert alert-primary" role="alert">
+        This will print on <strong>{{numPages}}</strong> pages
+      </div>
     </aside>
 
     <footer>
@@ -169,7 +174,7 @@
 
 import InputTag from 'vue-input-tag'
 import DatePicker from 'vuejs-datepicker'
-import { chunk } from 'lodash'
+import { chunk, ceil } from 'lodash'
 import moment from 'moment'
 
 const ONE_DAY = 86400000
@@ -214,10 +219,10 @@ module.exports = {
   data: function() {
     return {
       people: JSON.parse(localStorage.getItem('people')) || [],
-      sortByDate: false,
-      start: null,
-      end: null,
-      startOpenDate: nextMonday(),
+      sortByDate: JSON.parse(localStorage.getItem('sort')) || false,
+      start: localStorage.getItem('start') ? new Date(JSON.parse(localStorage.getItem('start'))) : 0 || null,
+      end: localStorage.getItem('start') ? new Date(JSON.parse(localStorage.getItem('end'))) : 0 || null,
+      startOpenDate: this.start || nextMonday(),
       upload: false,
       dateFormat: 'MMMM d, yyyy'
     }
@@ -226,6 +231,9 @@ module.exports = {
     document.querySelector('.new-tag').focus()
   },
   computed: {
+    numPages() {
+      return Math.ceil(this.people.length * this.weeks.length / 30)
+    },
     saveFileName() {
       return `people_${new Date().valueOf()}.json`
     },
@@ -277,9 +285,14 @@ module.exports = {
     }
   },
   methods: {
-    clearPeople() {
+    clear() {
       this.people = []
-      this.savePeople([])
+      this.start = null
+      this.end = null
+      this.sortByDate = false
+      this.saveDate()
+      this.savePeople()
+      this.removeSort()
     },
     restore(e) {
       let reader = new FileReader()
@@ -292,10 +305,30 @@ module.exports = {
     displayDate(date) {
       return date ? moment(date).format('ll') : ''
     },
+    saveSort(e) {
+      console.log(e.target.checked)
+      localStorage.setItem('sort', JSON.stringify(e.target.checked))
+    },
+    removeSort() {
+      localStorage.removeItem('sort')
+    },
+    saveDate(name, date) {
+      if (name) {
+        localStorage.setItem(name, JSON.stringify(date.valueOf()))
+      }
+      else {
+        ['start', 'end'].forEach(n => localStorage.removeItem(n))
+      }
+    },
     savePeople(people) {
-      let sortedPPL = people.slice().sort()
-      this.people = sortedPPL
-      localStorage.setItem('people', JSON.stringify(sortedPPL))
+      if (people) {
+        let sortedPPL = people.slice().sort()
+        this.people = sortedPPL
+        localStorage.setItem('people', JSON.stringify(sortedPPL))
+      }
+      else {
+        localStorage.removeItem('people')
+      }
     },
     validateSelection(e) {
 
