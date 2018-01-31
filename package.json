@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "npm run build && gh-pages -d build",
+    "build": "parcel build ./src/index.html --out-dir build --public-url /timecards/",
     "start": "concurrently \"npm run watch\" \"npm run serve\"",
     "watch": "parcel ./src/index.html",
     "serve": "browser-sync start -f ./dist --proxy localhost:1234 --no-open"
@@ -17,6 +19,7 @@
     "bootstrap": "^4.0.0",
     "browser-sync": "^2.23.6",
     "concurrently": "^3.5.1",
+    "gh-pages": "^1.1.0",
     "lodash": "^4.17.4",
     "moment": "^2.20.1",
     "node-sass": "^4.7.2",
