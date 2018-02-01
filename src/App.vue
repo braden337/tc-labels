@@ -178,7 +178,7 @@
 
 import InputTag from 'vue-input-tag'
 import DatePicker from 'vuejs-datepicker'
-import { chunk, ceil } from 'lodash'
+import { chunk, capitalize, words, uniq } from 'lodash'
 import moment from 'moment'
 
 const ONE_DAY = 86400000
@@ -326,7 +326,7 @@ module.exports = {
     },
     savePeople(people) {
       if (people) {
-        let sortedPPL = people.slice().sort()
+        let sortedPPL = uniq(people.map(x => words(x).map(capitalize).join(' ')).sort())
         this.people = sortedPPL
         localStorage.setItem('people', JSON.stringify(sortedPPL))
       }
