@@ -61,7 +61,7 @@
         </div>
       </form>
       <div v-if="start && end && people.length" class="alert alert-primary" role="alert">
-        This will print on <strong>{{numPages}}</strong> pages
+        <strong>{{weeks.length}}</strong> {{weeks.length | plural('week',' weeks')}} for <strong>{{people.length}}</strong> {{people.length | plural('person', 'people')}} will print on <strong>{{numPages}}</strong> {{numPages | plural('page', 'pages')}}
       </div>
     </aside>
 
@@ -178,7 +178,7 @@
 
 import InputTag from 'vue-input-tag'
 import DatePicker from 'vuejs-datepicker'
-import { chunk, capitalize, words, uniq } from 'lodash'
+import { chunk, uniq } from 'lodash'
 import moment from 'moment'
 
 const ONE_DAY = 86400000
@@ -236,7 +236,9 @@ module.exports = {
   },
   computed: {
     numPages() {
-      return Math.ceil(this.people.length * this.weeks.length / 30)
+      // return Math.ceil(this.people.length * this.weeks.length / 30)
+      let pages = this.people.length * this.weeks.length / 30
+      return Number.isInteger(pages) ? pages : pages.toFixed(1)
     },
     saveFileName() {
       return `people_${new Date().valueOf()}.json`
@@ -291,12 +293,12 @@ module.exports = {
   methods: {
     clear() {
       this.people = []
-      this.start = null
-      this.end = null
-      this.sortByDate = false
-      this.saveDate()
+      // this.start = null
+      // this.end = null
+      // this.sortByDate = false
+      // this.saveDate()
       this.savePeople()
-      this.removeSort()
+      // this.removeSort()
     },
     restore(e) {
       let reader = new FileReader()
@@ -324,9 +326,14 @@ module.exports = {
         ['start', 'end'].forEach(n => localStorage.removeItem(n))
       }
     },
+    capitalize(word) {
+      word = word.split('')
+      word[0] = word[0].toUpperCase()
+      return word.join('')
+    },
     savePeople(people) {
       if (people) {
-        let sortedPPL = uniq(people.map(x => words(x).map(capitalize).join(' ')).sort())
+        let sortedPPL = uniq(people.map(x => x.split(' ').map(this.capitalize).join(' ')).sort())
         this.people = sortedPPL
         localStorage.setItem('people', JSON.stringify(sortedPPL))
       }
@@ -342,6 +349,9 @@ module.exports = {
     }
   },
   filters: {
+    plural(n, singular, plural) {
+      return n == 1 ? singular : plural
+    },
     weekRange(week) {
       let a = moment(week.monday)
       let b = moment(week.sunday)
